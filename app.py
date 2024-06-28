@@ -96,7 +96,7 @@ def subdivide_triangle(v1, v2, v3):
 # Streamlit app
 st.set_page_config(layout="wide", page_title="Interactive Spherical Icosahedron", page_icon=":earth_americas:")
 
-st.title("Interactive Spherical Icosahedron")
+st.title("Interactive Spherical Icosahedron :earth_americas:")
 
 # 2. horizontal menu
 selected = option_menu(None, ["Home", "About"],
