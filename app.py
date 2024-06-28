@@ -26,7 +26,7 @@ def spherical_to_cartesian(lat, lon, r=1):
 
 
 # Function to create a spherical triangle
-def create_spherical_triangle(v1, v2, v3, color='red'):  # Default to red
+def create_spherical_triangle(v1, v2, v3, color='red'):
     # Normalize vertices to unit sphere
     v1 = v1 / np.linalg.norm(v1)
     v2 = v2 / np.linalg.norm(v2)
@@ -38,9 +38,9 @@ def create_spherical_triangle(v1, v2, v3, color='red'):  # Default to red
     arc3 = create_arc(v3, v1)
 
     # Combine arcs into a single trace
-    x = np.concatenate((arc1[:, 0], arc2[:, 0], arc3[:, 0]))
-    y = np.concatenate((arc1[:, 1], arc2[:, 1], arc3[:, 1]))
-    z = np.concatenate((arc1[:, 2], arc2[:, 2], arc3[:, 2]))
+    x = np.concatenate((arc1[:, 0], arc2[:, 0], arc3[:, 0], [arc1[0, 0]]))
+    y = np.concatenate((arc1[:, 1], arc2[:, 1], arc3[:, 1], [arc1[0, 1]]))
+    z = np.concatenate((arc1[:, 2], arc2[:, 2], arc3[:, 2], [arc1[0, 2]]))
 
     return go.Scatter3d(x=x, y=y, z=z, mode='lines', line=dict(color=color, width=2))
 
@@ -115,7 +115,7 @@ if st.sidebar.button("Subdivide Selected Triangle"):
     subdivided_triangles = subdivide_triangle(*selected_triangle)
     st.session_state.triangles.pop(selected_triangle_index)
     st.session_state.triangles.extend(subdivided_triangles)
-    st.session_state.subdivided.add(selected_triangle_index)
+    st.session_state.subdivided.clear()
     st.session_state.subdivided.update(range(len(st.session_state.triangles) - 4, len(st.session_state.triangles)))
 
 # Create Plotly figure
@@ -133,8 +133,6 @@ fig.add_trace(go.Surface(x=x, y=y, z=z, colorscale=[[0, 'rgb(200,200,200)'], [1,
 for i, triangle in enumerate(st.session_state.triangles):
     if i in st.session_state.subdivided:
         color = 'green'
-    elif i == selected_triangle_index:
-        color = 'blue'
     else:
         color = 'red'
     fig.add_trace(create_spherical_triangle(*triangle, color=color))
