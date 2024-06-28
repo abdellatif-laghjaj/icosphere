@@ -95,21 +95,28 @@ def subdivide_triangle(v1, v2, v3):
 # Streamlit app
 st.title("Interactive Spherical Icosahedron")
 
-# Create icosahedron triangles
-triangles = []
-for i in range(20):
-    v1 = VERTICES[FACES[i, 0]]
-    v2 = VERTICES[FACES[i, 1]]
-    v3 = VERTICES[FACES[i, 2]]
-    triangles.append((v1, v2, v3))
+# Initialize session state
+if 'triangles' not in st.session_state:
+    st.session_state.triangles = []
+    for i in range(20):
+        v1 = VERTICES[FACES[i, 0]]
+        v2 = VERTICES[FACES[i, 1]]
+        v3 = VERTICES[FACES[i, 2]]
+        st.session_state.triangles.append((v1, v2, v3))
+    st.session_state.subdivided = set()  # Track subdivided triangles
 
-# Initialize selected triangle
-selected_triangle_index = st.sidebar.number_input("Select Triangle Index:", min_value=0, max_value=len(triangles) - 1,
-                                                  value=0)
-selected_triangle = triangles[selected_triangle_index]
+# Dynamic select dropdown for selecting triangle
+triangle_options = list(range(len(st.session_state.triangles)))
+selected_triangle_index = st.sidebar.selectbox("Select Triangle Index:", options=triangle_options)
+selected_triangle = st.session_state.triangles[selected_triangle_index]
 
 # Subdivide selected triangle
-subdivided_triangles = subdivide_triangle(*selected_triangle)
+if st.sidebar.button("Subdivide Selected Triangle"):
+    subdivided_triangles = subdivide_triangle(*selected_triangle)
+    st.session_state.triangles.pop(selected_triangle_index)
+    st.session_state.triangles.extend(subdivided_triangles)
+    st.session_state.subdivided.add(selected_triangle_index)
+    st.session_state.subdivided.update(range(len(st.session_state.triangles) - 4, len(st.session_state.triangles)))
 
 # Create Plotly figure
 fig = go.Figure()
@@ -123,13 +130,14 @@ fig.add_trace(go.Surface(x=x, y=y, z=z, colorscale=[[0, 'rgb(200,200,200)'], [1,
                          showscale=False, opacity=0.3))
 
 # Add icosahedron triangles
-for i, triangle in enumerate(triangles):
-    color = 'blue' if i == selected_triangle_index else 'red'
+for i, triangle in enumerate(st.session_state.triangles):
+    if i in st.session_state.subdivided:
+        color = 'green'
+    elif i == selected_triangle_index:
+        color = 'blue'
+    else:
+        color = 'red'
     fig.add_trace(create_spherical_triangle(*triangle, color=color))
-
-# Add subdivided triangles
-for triangle in subdivided_triangles:
-    fig.add_trace(create_spherical_triangle(*triangle, color='green'))
 
 # Update layout
 fig.update_layout(
@@ -146,3 +154,6 @@ fig.update_layout(
 
 # Display figure in Streamlit
 st.plotly_chart(fig)
+
+# Display total number of triangles
+st.sidebar.write(f"Total number of triangles: {len(st.session_state.triangles)}")
