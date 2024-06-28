@@ -1,7 +1,5 @@
 # Interactive Spherical Icosahedron
 
-![Interactive Spherical Icosahedron](path/to/your/image.png)
-
 ## Overview
 
 Welcome to the Interactive Spherical Icosahedron project! This application allows you to visualize and interact with an
