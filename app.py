@@ -1,6 +1,7 @@
 import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
+from streamlit_option_menu import option_menu
 
 # Constants for icosahedron
 GOLDEN_RATIO = (1 + np.sqrt(5)) / 2
@@ -93,65 +94,93 @@ def subdivide_triangle(v1, v2, v3):
 
 
 # Streamlit app
+st.set_page_config(layout="wide", page_title="Interactive Spherical Icosahedron", page_icon=":earth_americas:")
+
 st.title("Interactive Spherical Icosahedron")
 
-# Initialize session state
-if 'triangles' not in st.session_state:
-    st.session_state.triangles = []
-    for i in range(20):
-        v1 = VERTICES[FACES[i, 0]]
-        v2 = VERTICES[FACES[i, 1]]
-        v3 = VERTICES[FACES[i, 2]]
-        st.session_state.triangles.append((v1, v2, v3))
-    st.session_state.subdivided = set()  # Track subdivided triangles
+# 2. horizontal menu
+selected = option_menu(None, ["Home", "About"],
+                       icons=['house', 'info-circle'],
+                       menu_icon="cast", default_index=0, orientation="horizontal")
 
-# Dynamic select dropdown for selecting triangle
-triangle_options = list(range(len(st.session_state.triangles)))
-selected_triangle_index = st.sidebar.selectbox("Select Triangle Index:", options=triangle_options)
-selected_triangle = st.session_state.triangles[selected_triangle_index]
+if selected == "Home":
+    # Initialize session state
+    if 'triangles' not in st.session_state:
+        st.session_state.triangles = []
+        for i in range(20):
+            v1 = VERTICES[FACES[i, 0]]
+            v2 = VERTICES[FACES[i, 1]]
+            v3 = VERTICES[FACES[i, 2]]
+            st.session_state.triangles.append((v1, v2, v3))
+        st.session_state.subdivided = set()  # Track subdivided triangles
 
-# Subdivide selected triangle
-if st.sidebar.button("Subdivide Selected Triangle"):
-    subdivided_triangles = subdivide_triangle(*selected_triangle)
-    st.session_state.triangles.pop(selected_triangle_index)
-    st.session_state.triangles.extend(subdivided_triangles)
-    st.session_state.subdivided.clear()
-    st.session_state.subdivided.update(range(len(st.session_state.triangles) - 4, len(st.session_state.triangles)))
+    # Dynamic select dropdown for selecting triangle
+    triangle_options = list(range(len(st.session_state.triangles)))
+    selected_triangle_index = st.sidebar.selectbox("Select Triangle Index:", options=triangle_options)
+    selected_triangle = st.session_state.triangles[selected_triangle_index]
 
-# Create Plotly figure
-fig = go.Figure()
+    # Subdivide selected triangle
+    if st.sidebar.button("Subdivide Selected Triangle"):
+        subdivided_triangles = subdivide_triangle(*selected_triangle)
+        st.session_state.triangles.pop(selected_triangle_index)
+        st.session_state.triangles.extend(subdivided_triangles)
+        st.session_state.subdivided.clear()
+        st.session_state.subdivided.update(range(len(st.session_state.triangles) - 4, len(st.session_state.triangles)))
 
-# Add sphere
-u, v = np.mgrid[0:2 * np.pi:40j, 0:np.pi:20j]
-x = np.cos(u) * np.sin(v)
-y = np.sin(u) * np.sin(v)
-z = np.cos(v)
-fig.add_trace(go.Surface(x=x, y=y, z=z, colorscale=[[0, 'rgb(200,200,200)'], [1, 'rgb(200,200,200)']],
-                         showscale=False, opacity=0.3))
+    # Create Plotly figure
+    fig = go.Figure()
 
-# Add icosahedron triangles
-for i, triangle in enumerate(st.session_state.triangles):
-    if i in st.session_state.subdivided:
-        color = 'green'
-    else:
-        color = 'red'
-    fig.add_trace(create_spherical_triangle(*triangle, color=color))
+    # Add sphere
+    u, v = np.mgrid[0:2 * np.pi:40j, 0:np.pi:20j]
+    x = np.cos(u) * np.sin(v)
+    y = np.sin(u) * np.sin(v)
+    z = np.cos(v)
+    fig.add_trace(go.Surface(x=x, y=y, z=z, colorscale=[[0, 'rgb(200,200,200)'], [1, 'rgb(200,200,200)']],
+                             showscale=False, opacity=0.3))
 
-# Update layout
-fig.update_layout(
-    title_text='Spherical Icosahedron',
-    scene=dict(
-        xaxis_title='X',
-        yaxis_title='Y',
-        zaxis_title='Z',
-        aspectmode='data'
-    ),
-    height=600,
-    width=800
-)
+    # Add icosahedron triangles
+    for i, triangle in enumerate(st.session_state.triangles):
+        if i in st.session_state.subdivided:
+            color = 'green'
+        else:
+            color = 'red'
+        fig.add_trace(create_spherical_triangle(*triangle, color=color))
 
-# Display figure in Streamlit
-st.plotly_chart(fig)
+    # Update layout
+    fig.update_layout(
+        title_text='Spherical Icosahedron',
+        scene=dict(
+            xaxis_title='X',
+            yaxis_title='Y',
+            zaxis_title='Z',
+            aspectmode='data'
+        ),
+        height=600,
+        width=800
+    )
 
-# Display total number of triangles
-st.sidebar.write(f"Total number of triangles: {len(st.session_state.triangles)}")
+    # Display figure in Streamlit
+    st.plotly_chart(fig)
+
+    # Display total number of triangles
+    st.sidebar.write(f"Total number of triangles: {len(st.session_state.triangles)}")
+
+elif selected == "About":
+    readme = """
+    ## Interactive Spherical Icosahedron
+
+    This application visualizes an icosahedron on a unit sphere. You can interact with the icosahedron by selecting a triangle and subdividing it into four smaller triangles. 
+
+    ### Features
+    - **Interactive Visualization**: Rotate and zoom into the icosahedron.
+    - **Triangle Subdivision**: Subdivide selected triangles to see finer details.
+    - **Dynamic Updates**: The icosahedron updates dynamically with each subdivision.
+
+    ### Author
+    This application was created with significant effort by [Abdellatif Laghjaj](https://github.com/abdellatif-laghjaj/).
+
+    ### Note
+    This application is a demonstration of interactive 3D graphics using Streamlit and Plotly.
+    """
+
+    st.markdown(readme)
