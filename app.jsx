@@ -9,12 +9,12 @@ const Container = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #1a202c; /* Example dark background */
+  background-color: #ffffff;
 `;
 
 function Sphere() {
-  const radius = 30;
-  const detail = 6;
+  const radius = 20;
+  const detail = 1;
 
   return (
     <mesh>
@@ -23,7 +23,7 @@ function Sphere() {
         color={0xffffff}
         wireframe
         roughness={0.5}
-        metalness={0.8}
+        metalness={0.6}
       />
     </mesh>
   );
