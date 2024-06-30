@@ -1,45 +1,80 @@
-import React from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
-import styled from 'styled-components';
-
-const Container = styled.div`
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #ffffff;
-`;
-
-function Sphere() {
-  const radius = 20;
-  const detail = 1;
-
-  return (
-    <mesh>
-      <icosahedronGeometry args={[radius, detail]} />
-      <meshStandardMaterial
-        color={0xffffff}
-        wireframe
-        roughness={0.5}
-        metalness={0.6}
-      />
-    </mesh>
-  );
-}
+import React, { useRef, useEffect } from 'react';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 function App() {
-  return (
-    <Container>
-      <Canvas camera={{ position: [0, 0, 80], fov: 40 }}>
-        <ambientLight intensity={0.5} />
-        <pointLight position={[0, 20, 60]} intensity={2} />
-        <OrbitControls minDistance={60} maxDistance={150} />
-        <Sphere />
-      </Canvas>
-    </Container>
-  );
+  const mountRef = useRef(null);
+
+  useEffect(() => {
+    const currentMount = mountRef.current;
+
+    // Scene setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0xffffff);  // Set background to white
+    currentMount.appendChild(renderer.domElement);
+
+    // Create icosphere
+    const radius = 1;
+    const detail = 1;  // Reduced detail to match the image
+    const geometry = new THREE.IcosahedronGeometry(radius, detail);
+
+    // Create material for faces
+    const faceMaterial = new THREE.MeshBasicMaterial({
+      color: 0xeeeeee,  // Light grey color
+      side: THREE.DoubleSide
+    });
+
+    // Create material for edges
+    const edgeMaterial = new THREE.LineBasicMaterial({
+      color: 0xff0000,  // Red color
+      linewidth: 2
+    });
+
+    // Create mesh for faces
+    const icosphere = new THREE.Mesh(geometry, faceMaterial);
+    scene.add(icosphere);
+
+    // Create edges
+    const edges = new THREE.EdgesGeometry(geometry);
+    const line = new THREE.LineSegments(edges, edgeMaterial);
+    scene.add(line);
+
+    // Position camera
+    camera.position.z = 3;
+
+    // Add OrbitControls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.25;
+    controls.enableZoom = true;
+
+    // Animation loop
+    const animate = () => {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    // Handle window resize
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => {
+      currentMount.removeChild(renderer.domElement);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  return <div ref={mountRef} style={{ width: '100%', height: '100vh' }} />;
 }
 
 export default App;
